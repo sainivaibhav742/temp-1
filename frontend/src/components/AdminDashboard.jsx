@@ -14,7 +14,13 @@ const AdminDashboard = () => {
 
   // Projects state
   const [projects, setProjects] = useState([]);
-  const [newProject, setNewProject] = useState({ name: '', description: '' });
+  const [newProject, setNewProject] = useState({ 
+    name: '', 
+    description: '', 
+    email: '', 
+    contactNumber: '', 
+    timeline: '' 
+  });
 
   // Users state
   const [users, setUsers] = useState([]);
@@ -27,6 +33,14 @@ const AdminDashboard = () => {
 
   // Requests state
   const [requests, setRequests] = useState([]);
+
+  // Statistics
+  const [stats, setStats] = useState({
+    totalProjects: 0,
+    totalUsers: 0,
+    pendingRequests: 0,
+    activeUsers: 0
+  });
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -44,8 +58,28 @@ const AdminDashboard = () => {
       } else if (activeTab === 'requests') {
         await fetchRequests();
       }
+      await calculateStats();
     } finally {
       setLoading(false);
+    }
+  };
+
+  const calculateStats = async () => {
+    try {
+      const [projectsRes, usersRes, requestsRes] = await Promise.all([
+        axios.get(`${API_URL}/api/admin/projects`, { withCredentials: true }),
+        axios.get(`${API_URL}/api/admin/users`, { withCredentials: true }),
+        axios.get(`${API_URL}/api/admin/requests`, { withCredentials: true })
+      ]);
+
+      setStats({
+        totalProjects: projectsRes.data.projects?.length || 0,
+        totalUsers: usersRes.data.users?.length || 0,
+        pendingRequests: requestsRes.data.requests?.filter(r => r.status === 'pending').length || 0,
+        activeUsers: usersRes.data.users?.filter(u => u.isActive).length || 0
+      });
+    } catch (error) {
+      console.error('Failed to calculate stats:', error);
     }
   };
 
@@ -100,7 +134,7 @@ const AdminDashboard = () => {
       );
       if (response.data.success) {
         setSuccess('Project created successfully!');
-        setNewProject({ name: '', description: '' });
+        setNewProject({ name: '', description: '', email: '', contactNumber: '', timeline: '' });
         fetchProjects();
         setTimeout(() => setSuccess(''), 3000);
       }
@@ -248,6 +282,61 @@ const AdminDashboard = () => {
         </div>
       )}
 
+      {/* Stats Cards */}
+      <div className="stats-grid">
+        <div className="stat-card stat-card-projects">
+          <div className="stat-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            </svg>
+          </div>
+          <div className="stat-content">
+            <div className="stat-value">{stats.totalProjects}</div>
+            <div className="stat-label">Total Projects</div>
+          </div>
+        </div>
+
+        <div className="stat-card stat-card-users">
+          <div className="stat-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+          </div>
+          <div className="stat-content">
+            <div className="stat-value">{stats.totalUsers}</div>
+            <div className="stat-label">Total Users</div>
+          </div>
+        </div>
+
+        <div className="stat-card stat-card-requests">
+          <div className="stat-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+          </div>
+          <div className="stat-content">
+            <div className="stat-value">{stats.pendingRequests}</div>
+            <div className="stat-label">Pending Requests</div>
+          </div>
+        </div>
+
+        <div className="stat-card stat-card-active">
+          <div className="stat-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+            </svg>
+          </div>
+          <div className="stat-content">
+            <div className="stat-value">{stats.activeUsers}</div>
+            <div className="stat-label">Active Users</div>
+          </div>
+        </div>
+      </div>
+
       {/* Content */}
       <div className="admin-content">
         {activeTab === 'projects' && (
@@ -267,6 +356,36 @@ const AdminDashboard = () => {
                       value={newProject.name}
                       onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
                       placeholder="e.g., Website Redesign"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Email Address</label>
+                    <input
+                      type="email"
+                      value={newProject.email}
+                      onChange={(e) => setNewProject({ ...newProject, email: e.target.value })}
+                      placeholder="project@example.com"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Contact Number</label>
+                    <input
+                      type="tel"
+                      value={newProject.contactNumber}
+                      onChange={(e) => setNewProject({ ...newProject, contactNumber: e.target.value })}
+                      placeholder="+1 (555) 123-4567"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Timeline</label>
+                    <input
+                      type="text"
+                      value={newProject.timeline}
+                      onChange={(e) => setNewProject({ ...newProject, timeline: e.target.value })}
+                      placeholder="e.g., 3 months, Q2 2026"
                       required
                     />
                   </div>
@@ -317,6 +436,26 @@ const AdminDashboard = () => {
                     <h3>{project.name}</h3>
                     <p>{project.description}</p>
                     <div className="project-meta">
+                      <span className="meta-item">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                          <polyline points="22,6 12,13 2,6"></polyline>
+                        </svg>
+                        {project.email}
+                      </span>
+                      <span className="meta-item">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                        </svg>
+                        {project.contactNumber}
+                      </span>
+                      <span className="meta-item">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        {project.timeline}
+                      </span>
                       <span className="meta-item">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>

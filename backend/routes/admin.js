@@ -41,12 +41,12 @@ router.get('/projects', isAuthenticated, isAdmin, async (req, res) => {
  */
 router.post('/projects', isAuthenticated, isAdmin, async (req, res) => {
   try {
-    const { name, description } = req.body;
+    const { name, description, email, contactNumber, timeline } = req.body;
     
-    if (!name || !description) {
+    if (!name || !description || !email || !contactNumber || !timeline) {
       return res.status(400).json({
         success: false,
-        message: 'Project name and description are required'
+        message: 'All fields are required: name, description, email, contact number, and timeline'
       });
     }
     
@@ -56,6 +56,9 @@ router.post('/projects', isAuthenticated, isAdmin, async (req, res) => {
     const projectData = {
       name: name,
       description: description,
+      email: email,
+      contactNumber: contactNumber,
+      timeline: timeline,
       createdAt: new Date().toISOString(),
       createdBy: req.session.user.userId || req.session.user.username,
       accessibleBy: [] // Initially no one has access
