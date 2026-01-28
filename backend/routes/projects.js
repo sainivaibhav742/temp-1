@@ -34,7 +34,7 @@ router.get('/', isAuthenticated, async (req, res) => {
     } else {
       // Client sees only approved projects
       const projectsSnapshot = await db.collection('projects')
-        .where('accessibleBy', 'array-contains', user.id)
+        .where('accessibleBy', 'array-contains', user.userId)
         .get();
       
       const projects = projectsSnapshot.docs.map(doc => ({
@@ -81,7 +81,7 @@ router.get('/all', isAuthenticated, async (req, res) => {
     
     // Get user's pending requests
     const requestsSnapshot = await db.collection('accessRequests')
-      .where('userId', '==', user.id)
+      .where('userId', '==', user.userId)
       .where('status', '==', 'pending')
       .get();
     
@@ -89,7 +89,7 @@ router.get('/all', isAuthenticated, async (req, res) => {
     
     // Filter projects user doesn't have access to
     const availableProjects = allProjects.filter(project => {
-      const hasAccess = project.accessibleBy && project.accessibleBy.includes(user.id);
+      const hasAccess = project.accessibleBy && project.accessibleBy.includes(user.userId);
       const hasPendingRequest = pendingProjectIds.includes(project.id);
       
       return !hasAccess;
@@ -145,7 +145,7 @@ router.post('/request-access', isAuthenticated, async (req, res) => {
     
     // Check if user already has access
     const projectData = projectDoc.data();
-    if (projectData.accessibleBy && projectData.accessibleBy.includes(user.id)) {
+    if (projectData.accessibleBy && projectData.accessibleBy.includes(user.userId)) {
       return res.status(400).json({
         success: false,
         message: 'You already have access to this project'
@@ -154,7 +154,7 @@ router.post('/request-access', isAuthenticated, async (req, res) => {
     
     // Check if there's already a pending request
     const existingRequest = await db.collection('accessRequests')
-      .where('userId', '==', user.id)
+      .where('userId', '==', user.userId)
       .where('projectId', '==', projectId)
       .where('status', '==', 'pending')
       .get();
@@ -168,7 +168,7 @@ router.post('/request-access', isAuthenticated, async (req, res) => {
     
     // Create access request
     const requestData = {
-      userId: user.id,
+      userId: user.userId,
       userName: user.username,
       userEmail: user.email,
       projectId: projectId,

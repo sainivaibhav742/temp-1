@@ -185,7 +185,7 @@ router.post('/requests/:requestId/approve', isAuthenticated, isAdmin, async (req
     await db.collection('accessRequests').doc(requestId).update({
       status: 'approved',
       approvedAt: new Date().toISOString(),
-      approvedBy: req.session.user.id
+      approvedBy: req.session.user.userId
     });
     
     // Grant access to the project
@@ -236,7 +236,7 @@ router.post('/requests/:requestId/deny', isAuthenticated, isAdmin, async (req, r
     await db.collection('accessRequests').doc(requestId).update({
       status: 'denied',
       deniedAt: new Date().toISOString(),
-      deniedBy: req.session.user.id
+      deniedBy: req.session.user.userId
     });
     
     return res.status(200).json({
