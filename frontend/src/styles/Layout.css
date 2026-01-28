@@ -1,0 +1,30 @@
+.app-layout {
+  min-height: 100vh;
+  background: #0f0f1e;
+}
+
+.layout-container {
+  display: flex;
+  padding-top: 64px;
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 260px;
+  padding: 32px;
+  min-height: calc(100vh - 64px);
+  background: #0f0f1e;
+}
+
+@media (max-width: 1024px) {
+  .main-content {
+    margin-left: 80px;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+    padding: 20px;
+  }
+}
